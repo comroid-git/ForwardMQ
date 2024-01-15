@@ -1,15 +1,61 @@
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.0.+'
-	id 'io.spring.dependency-management' version '1.1.4'
+	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
 }
 
 group = 'org.comroid'
 version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
-java {
-	sourceCompatibility = '17'
-	targetCompatibility = '17'
+bootRun {
+	if (System.getenv().containsKey('DEBUGGER')) {
+		System.out.println("Using remote Debugger")
+		jvmArgs(['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'])
+	}
+}
+
+tasks.register('gitCommitResource') {
+	def currentCommitHash = 'git rev-parse HEAD'.execute().text.trim()
+	def commitDir = file(projectDir.toString() + "/src/core/main/resources/static/api/open/info")
+	def commitFile = file("${commitDir}/commit.txt")
+
+	outputs.upToDateWhen { task ->
+		// Determine if the task is up to date based on the condition
+		if (commitFile.exists()) {
+			def existingCommitHash = commitFile.text.trim()
+			return existingCommitHash == currentCommitHash
+		}
+
+		// If commit.txt doesn't exist, the task is not up to date
+		return false
+	}
+
+	doLast {
+		def commitDateTime = new Date().format('yyyy-MM-dd HH:mm:ss')
+		def commitInfo = "${commitDateTime} - ${currentCommitHash}"
+
+		def historyFile = file("${commitDir}/build_history.txt")
+
+		// Ensure the directory exists
+		commitDir.mkdirs()
+
+		commitFile.text = currentCommitHash
+		println "Git commit hash has been written to ${commitFile}"
+
+		if (historyFile.exists()) {
+			historyFile.append("\n$commitInfo")
+		} else {
+			historyFile.text = commitInfo
+		}
+
+		println "Git commit info has been appended to ${historyFile}"
+	}
+}
+
+compileJava {
+	dependsOn 'gitCommitResource'
 }
 
 configurations {
@@ -23,27 +69,50 @@ tasks.named('test') {
 }
 
 repositories {
+	mavenLocal()
+	maven { url 'https://maven.comroid.org' }
 	mavenCentral()
+	maven { url 'https://jitpack.io' }
 }
 
 dependencies {
+	// api lib
 	if (findProject(':japi') != null)
 		implementation project(':japi')
 	else implementation 'org.comroid:japi:+'
-	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+	// web
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	// database
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// security
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.springframework.session:spring-session-jdbc'
-	compileOnly 'org.projectlombok:lombok'
+
+	// rabbitmq
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+	// discord
+	implementation 'net.dv8tion:JDA:5.+'
+	implementation 'club.minnced:discord-webhooks:0.+'
+
+	// minecraft tellraw adapter
+	implementation 'net.kyori:adventure-api:4.11.0'
+
+	// util
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	developmentOnly 'org.springframework.boot:spring-boot-starter-actuator'
-	runtimeOnly 'com.mysql:mysql-connector-j'
+	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.amqp:spring-rabbit-test'
 }

@@ -1,0 +1,35 @@
+server:
+  port: 6969
+  # sessions
+  servlet:
+    session:
+      timeout: 7d
+spring:
+  session:
+    jdbc:
+      initialize-schema: always
+      schema: classpath:/org/springframework/session/jdbc/schema-mysql.sql
+  # bean overriding
+  main:
+    allow-bean-definition-overriding: true
+  # database config
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: false
+    hibernate.ddl-auto: update
+  datasource:
+    hikari:
+      auto-commit: true
+      max-lifetime: 360_000
+  # mvc config
+  web:
+    resources:
+      static-locations: classpath:/static/
+  mvc:
+    static-path-pattern: /static/**
+logging:
+  level:
+    root: info
+    cron: debug
+    screen: warn
+    org.comroid: debug

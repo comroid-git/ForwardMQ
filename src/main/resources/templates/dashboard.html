@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{/head}"></head>
+<script type="text/javascript" th:src="@{/static/dashboard.js}"></script>
+<body>
+<div class="ui-menubar" th:insert="~{/menubar}"></div>
+<h3>Hello <b th:text="${user.getBestName()}"></b></h3>
+<div class="ui-container-page">
+  <div class="ui-content">
+    <h1>hello world</h1>
+  </div>
+</div>
+<div class="ui-footer" th:insert="~{/footer}"></div>
+</body>
+</html>

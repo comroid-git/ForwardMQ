@@ -1,4 +1,4 @@
-rootProject.name = 'forwardmq'
+rootProject.name = 'ForwardMQ'
 
 var dirApi = file('../japi/')
 if (!dirApi.exists())
