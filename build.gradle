@@ -1,0 +1,40 @@
+apply plugin: 'application'
+
+group = 'org.comroid'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    maven { url 'https://maven.comroid.org' }
+    mavenCentral()
+}
+
+test {
+    useJUnitPlatform()
+}
+
+dependencies {
+    if (findProject(':japi') != null)
+        implementation project(':japi')
+    else implementation 'org.comroid:japi:+'
+
+    // discord
+    implementation 'net.dv8tion:JDA:5.+'
+    implementation 'club.minnced:discord-webhooks:0.+'
+
+    // rabbitmq
+    implementation 'com.rabbitmq:amqp-client:5.18.0'
+
+    // scripting
+    implementation 'org.openjdk.nashorn:nashorn-core:15.4'
+
+    // database
+    implementation 'org.hibernate:hibernate-core:6.4.1.Final'
+
+    // utility
+    compileOnly 'org.projectlombok:lombok:+'
+    annotationProcessor 'org.projectlombok:lombok:+'
+
+    // tests
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
