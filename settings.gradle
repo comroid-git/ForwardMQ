@@ -1,4 +1,4 @@
-rootProject.name = 'RabbitCord'
+rootProject.name = 'forwardmq'
 
 var dirApi = file('../japi/')
 if (!dirApi.exists())
