@@ -25,7 +25,6 @@ public abstract class Entity {
     private @Id UUID id = UUID.randomUUID();
     private @Nullable @Setter String name;
     private @Nullable @Setter String displayName;
-    private @Nullable @Setter Long owner;
 
     public String getBestName() {
         return Optional.ofNullable(displayName)
