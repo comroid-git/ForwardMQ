@@ -84,11 +84,13 @@ public enum RabbitCord implements Command.Handler {
                     .build()
                     .awaitReady();
             jda.updateCommands().addCommands(
-                    Commands.slash("amqplink", "Link this channel to the specified AMQP Exchange")
+                    Commands.slash("amqp-link", "Link this channel to the specified AMQP Exchange")
                             .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
                             .addOption(OptionType.STRING, "amqp-uri", "The AMQP URL to connect to", true)
                             .addOption(OptionType.STRING, "exchange-name", "The AMQP exchange name to connect to", true),
                     Commands.slash("amqp", "See AMQP channel status")
+                            .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL)),
+                    Commands.slash("amqp-unlink", "Removes AMQP link from this channel")
                             .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
             ).queue();
 
@@ -130,7 +132,22 @@ public enum RabbitCord implements Command.Handler {
     }
 
     @Command(ephemeral = true)
-    public String amqplink(SlashCommandInteractionEvent event, Guild guild, MessageChannelUnion channel) {
+    public Object amqp(Guild guild, MessageChannelUnion channel) {
+        var id = new UUID(guild.getIdLong(), channel.getIdLong());
+        if (!channels.containsKey(id))
+            return "This channel is not linked";
+        var conn = channels.get(id);
+        var config = conn.getConfig();
+        var uri = Polyfill.uri(config.getAmqpUri());
+        return new EmbedBuilder()
+                .setDescription("This channel is linked")
+                .addField("RabbitMQ Host", uri.getHost(), true)
+                .addField("Exchange", config.getExchange(), true)
+                .addField("Status", conn.getChannel().isOpen() ? "Healthy" : "Troubled", true);
+    }
+
+    @Command(value = "amqp-link", ephemeral = true)
+    public String amqpLink(SlashCommandInteractionEvent event, Guild guild, MessageChannelUnion channel) {
         var uri = event.getOption("amqp-uri").getAsString();
         var exchange = event.getOption("exchange-name").getAsString();
         var config = new DiscordChannelConnection.Config(guild.getIdLong(), channel.getIdLong(), uri, exchange);
@@ -143,8 +160,17 @@ public enum RabbitCord implements Command.Handler {
         return "Channel linked";
     }
 
-    @Command(ephemeral = true)
-    public void amqp() {/*todo*/}
+    @Command(value = "amqp-unlink", ephemeral = true)
+    public String amqpUnlink(Guild guild, MessageChannelUnion channel) {
+        var id = new UUID(guild.getIdLong(), channel.getIdLong());
+        if (!channels.containsKey(id))
+            return "This channel is not linked";
+        var old = channels.remove(id);
+        if (!DirChannels.createSubFile(id+".json").delete())
+            return "Link could not be removed";
+        old.terminate();
+        return "Channel was unlinked";
+    }
 
     @Override
     public void handleResponse(Command.Delegate cmd, @NotNull Object response, Object... args) {
