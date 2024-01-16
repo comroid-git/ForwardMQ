@@ -84,11 +84,11 @@ public enum RabbitCord implements Command.Handler {
                     .build()
                     .awaitReady();
             jda.updateCommands().addCommands(
-                    Commands.slash("link", "Link this channel to the specified AMQP Exchange")
+                    Commands.slash("amqplink", "Link this channel to the specified AMQP Exchange")
                             .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
                             .addOption(OptionType.STRING, "amqp-uri", "The AMQP URL to connect to", true)
                             .addOption(OptionType.STRING, "exchange-name", "The AMQP exchange name to connect to", true),
-                    Commands.slash("status", "See AMQP channel status")
+                    Commands.slash("amqp", "See AMQP channel status")
                             .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
             ).queue();
 
@@ -129,7 +129,7 @@ public enum RabbitCord implements Command.Handler {
     }
 
     @Command(ephemeral = true)
-    public String link(SlashCommandInteractionEvent event, Guild guild, MessageChannelUnion channel) {
+    public String amqplink(SlashCommandInteractionEvent event, Guild guild, MessageChannelUnion channel) {
         var uri = event.getOption("amqp-uri").getAsString();
         var exchange = event.getOption("exchange-name").getAsString();
         var config = new DiscordChannelConnection.Config(guild.getIdLong(), channel.getIdLong(), uri, exchange);
@@ -143,7 +143,7 @@ public enum RabbitCord implements Command.Handler {
     }
 
     @Command(ephemeral = true)
-    public void status() {/*todo*/}
+    public void amqp() {/*todo*/}
 
     @Override
     public void handleResponse(Command.Delegate cmd, @NotNull Object response, Object... args) {
