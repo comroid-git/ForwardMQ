@@ -136,10 +136,10 @@ public enum RabbitCord implements Command.Handler {
         var config = new DiscordChannelConnection.Config(guild.getIdLong(), channel.getIdLong(), uri, exchange);
         var id = config.getUuid();
 
-        DirChannels.createSubFile(id +".json").setContent(config.json());
         var conn = new DiscordChannelConnection(config);
-        channels.put(id, conn);
         conn.initialize();
+        channels.put(id, conn);
+        DirChannels.createSubFile(id +".json").setContent(config.json());
         return "Channel linked";
     }
 
