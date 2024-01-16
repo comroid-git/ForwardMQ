@@ -115,11 +115,12 @@ public enum RabbitCord implements Command.Handler {
                 var message = event.getMessage();
                 var str = message.getContentStripped() + message.getAttachments().stream()
                         .map(Message.Attachment::getUrl)
-                        .collect(Collectors.joining(" "," ",""));
+                        .collect(Collectors.joining(" "," ",""))
+                        .trim();
                 //str = TextDecoration.sanitize(str, Markdown.class);
 
                 var comp = text("DISCORD ", TextColor.color(86, 98, 246))
-                        .append(text(EmojiUtils.removeAllEmojis(author.getEffectiveName()), TextColor.color(Objects.requireNonNull(message.getMember()).getColorRaw())))
+                        .append(text(EmojiUtils.removeAllEmojis(author.getEffectiveName()).trim(), TextColor.color(Objects.requireNonNull(message.getMember()).getColorRaw())))
                         .append(text(": " + str, TextColor.color(0xFF_FF_FF)));
                 channels.get(channelId).sendToRabbit(comp);
             });
