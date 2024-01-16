@@ -2,6 +2,7 @@ apply plugin: 'application'
 
 group = 'org.comroid'
 version = '1.0-SNAPSHOT'
+mainClassName = 'org.comroid.rabbitcord.RabbitCord'
 
 repositories {
     maven { url 'https://maven.comroid.org' }
@@ -24,11 +25,12 @@ dependencies {
     // rabbitmq
     implementation 'com.rabbitmq:amqp-client:5.18.0'
 
-    // scripting
-    implementation 'org.openjdk.nashorn:nashorn-core:15.4'
+    // emoji
+    implementation 'com.kcthota:emoji4j:6.+'
 
-    // database
-    implementation 'org.hibernate:hibernate-core:6.4.1.Final'
+    // minecraft
+    implementation 'net.kyori:adventure-api:4.+'
+    implementation 'net.kyori:adventure-text-serializer-gson:4.+'
 
     // utility
     compileOnly 'org.projectlombok:lombok:+'
