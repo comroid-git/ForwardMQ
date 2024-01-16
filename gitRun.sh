@@ -5,10 +5,10 @@ export pidFile="unit.pid"
 echo $$ > $pidFile
 trap 'rm -f $pidFile' EXIT
 
-if [ -z $2 ]; then
+if [ -z $1 ]; then
   branch="main"
 else
-  branch="$2"
+  branch="$1"
 fi
 
 function fetch() {
