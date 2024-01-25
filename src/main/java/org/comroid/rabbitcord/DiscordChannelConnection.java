@@ -2,9 +2,7 @@ package org.comroid.rabbitcord;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.*;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -40,6 +38,12 @@ public class DiscordChannelConnection extends Component.Base {
         var factory = new ConnectionFactory();
         factory.setUri(config.amqpUri);
         connection = factory.newConnection();
+    }
+
+    @SneakyThrows
+    private void checkChannel() {
+        if (channel.isOpen())
+            return;
 
         channel = connection.createChannel();
         channel.exchangeDeclare("aurion.chat", "fanout");
@@ -47,16 +51,7 @@ public class DiscordChannelConnection extends Component.Base {
         String queue = channel.queueDeclare().getQueue();
         channel.queueBind(queue, "aurion.chat", "");
 
-        channel.basicConsume(queue, true, (consumerTag, content) -> {
-            try {
-                var data = new JsonParser().parse(new String(content.getBody(), StandardCharsets.UTF_8)).getAsJsonObject();
-                var component = GsonComponentSerializer.gson().deserialize(data.get("message").getAsString());
-                if (!data.has("source"))
-                    sendToDiscord(component);
-            } catch (Throwable t) {
-                log.log(Level.SEVERE, "Internal error", t);
-            }
-        }, consumerTag -> {});
+        channel.basicConsume(queue, true, this::handleRabbitData, consumerTag -> {});
     }
 
     @Override
@@ -93,7 +88,19 @@ public class DiscordChannelConnection extends Component.Base {
         json.addProperty("channel", "global");
         json.addProperty("message", GsonComponentSerializer.gson().serializeToTree(component).toString());
 
+        checkChannel();
         channel.basicPublish(config.exchange, "", null, json.toString().getBytes());
+    }
+
+    private void handleRabbitData(String $, Delivery content) {
+        try {
+            var data = new JsonParser().parse(new String(content.getBody(), StandardCharsets.UTF_8)).getAsJsonObject();
+            var component = GsonComponentSerializer.gson().deserialize(data.get("message").getAsString());
+            if (!data.has("source"))
+                sendToDiscord(component);
+        } catch (Throwable t) {
+            log.log(Level.SEVERE, "Internal error", t);
+        }
     }
 
     @lombok.Value
