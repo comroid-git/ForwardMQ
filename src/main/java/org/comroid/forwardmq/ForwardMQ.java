@@ -3,18 +3,12 @@ package org.comroid.forwardmq;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.utils.Compression;
 import org.comroid.api.func.util.DelegateStream;
 import org.comroid.api.io.FileHandle;
 import org.comroid.api.net.REST;
 import org.comroid.api.os.OS;
 import org.comroid.forwardmq.dto.Config;
 import org.comroid.forwardmq.entity.Entity;
-import org.comroid.forwardmq.entity.data.DataScheme;
-import org.comroid.forwardmq.repo.DataSchemeRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -41,16 +35,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 @Slf4j
 @ImportResource({"classpath:beans.xml"})
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, RabbitAutoConfiguration.class}, scanBasePackages = "org.comroid.forwardmq.*")
-public class Program {
-	private @Lazy @Autowired DataSchemeRepo dataSchemeRepo;
-
+public class ForwardMQ {
 	public static void main(String[] args) {
-		SpringApplication.run(Program.class, args);
+		SpringApplication.run(ForwardMQ.class, args);
 	}
 	@Bean(name = "configDir")
 	@Order(Ordered.HIGHEST_PRECEDENCE)
@@ -129,11 +120,6 @@ public class Program {
 			void makeDataScheme() {
 			}
 		};
-
-		Map.<UUID, Consumer<DataScheme>>of(
-				"rabbitmq", it -> it.setId(UU)
-		).entrySet().stream()
-				.map()
 
 		return result;
 	}

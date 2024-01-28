@@ -5,7 +5,7 @@
     </envs>
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
     <module name="ForwardMQ.main" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="org.comroid.forwardmq.Program" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="org.comroid.forwardmq.ForwardMQ" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
