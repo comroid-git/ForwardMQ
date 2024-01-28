@@ -21,5 +21,4 @@ import java.net.URL;
 @Related(DataAdapter$DiscordWebhook.class)
 public final class ProtoAdapter$DiscordWebhook extends ProtoAdapter {
     private @Basic URL webhookUrl;
-    public interface Repo extends ProtoAdapter.Repo<ProtoAdapter$DiscordWebhook> {}
 }

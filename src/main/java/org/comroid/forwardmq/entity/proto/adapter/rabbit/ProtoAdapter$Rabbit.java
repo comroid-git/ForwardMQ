@@ -25,5 +25,4 @@ public final class ProtoAdapter$Rabbit extends ProtoAdapter {
     private String exchange;
     private @Nullable String exchangeType;
     private @Nullable String routingKey;
-    public interface Repo extends ProtoAdapter.Repo<ProtoAdapter$Rabbit> {}
 }

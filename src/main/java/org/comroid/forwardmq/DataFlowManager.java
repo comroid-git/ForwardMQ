@@ -1,6 +1,6 @@
 package org.comroid.forwardmq;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.Synchronized;
 import lombok.Value;
 import lombok.extern.java.Log;
@@ -19,11 +19,8 @@ import org.comroid.forwardmq.data.processor.DataProcessor;
 import org.comroid.forwardmq.entity.DataFlow;
 import org.comroid.forwardmq.entity.proto.Proto;
 import org.comroid.forwardmq.entity.proto.adapter.ProtoAdapter;
-import org.comroid.forwardmq.entity.proto.adapter.discord.ProtoAdapter$DiscordChannel;
-import org.comroid.forwardmq.entity.proto.adapter.discord.ProtoAdapter$DiscordWebhook;
-import org.comroid.forwardmq.entity.proto.adapter.rabbit.ProtoAdapter$Rabbit;
 import org.comroid.forwardmq.entity.proto.processor.ProtoProcessor;
-import org.comroid.forwardmq.entity.proto.processor.eval.ProtoProcessor$JavaScript;
+import org.comroid.forwardmq.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -42,7 +39,7 @@ import java.util.logging.Level;
 import java.util.stream.Stream;
 
 @Log
-@Data
+@Getter
 @Service
 public class DataFlowManager extends Component.Base implements ApplicationRunner {
     public static final ThreadGroup mThreadGroup = new ThreadGroup("DataFlowManager");
@@ -50,10 +47,10 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
     private final Map<ProtoProcessor, DataProcessor<?>> processorCache = new ConcurrentHashMap<>();
     private final Map<DataFlow, DataFlowRunner> runnerCache = new ConcurrentHashMap<>();
     private @Autowired ForwardMQ fmq;
-    private @Autowired ProtoAdapter$DiscordChannel.Repo adapterRepo_dc;
-    private @Autowired ProtoAdapter$DiscordWebhook.Repo adapterRepo_dw;
-    private @Autowired ProtoAdapter$Rabbit.Repo adapterRepo_mq;
-    private @Autowired ProtoProcessor$JavaScript.Repo processorRepo_js;
+    private @Autowired DiscordChannelAdapterRepo adapterRepo_dc;
+    private @Autowired DiscordWebhookAdapterRepo adapterRepo_dw;
+    private @Autowired RabbitAdapterRepo adapterRepo_mq;
+    private @Autowired JavaScriptProcessorRepo processorRepo_js;
     private @Autowired DataFlow.Repo flowRepo;
     private @Autowired ScheduledExecutorService executor;
 
@@ -88,8 +85,7 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
                 Stream.of(processorRepo_js),
                 ProtoProcessor.class, DataProcessor.class, processorCache);
         var flowCount = Streams.of(flowRepo.findAll())
-                .map(DataFlowRunner::new)
-                .peek(executor::execute)
+                .peek(this::init)
                 .count();
 
         log.info("Initialized with %d adapters; %d processors and %d flows"
@@ -102,8 +98,7 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
         runnerCache.clear();
     }
 
-    public void start(DataFlow flow) {
-        //noinspection resource
+    public void init(DataFlow flow) {
         runnerCache.computeIfAbsent(flow, it -> {
             var runner = new DataFlowRunner(it);
             runner.start();

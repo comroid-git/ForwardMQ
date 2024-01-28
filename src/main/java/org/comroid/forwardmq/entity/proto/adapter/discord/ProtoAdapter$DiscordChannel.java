@@ -18,7 +18,5 @@ import org.comroid.forwardmq.entity.proto.adapter.ProtoAdapter;
 @jakarta.persistence.Entity
 @Related(DataAdapter$DiscordChannel.class)
 public final class ProtoAdapter$DiscordChannel extends ProtoAdapter {
-    private @Basic long guildId;
-    private long channelId;
-    public interface Repo extends ProtoAdapter.Repo<ProtoAdapter$DiscordChannel> {}
+    private @Basic long channelId;
 }

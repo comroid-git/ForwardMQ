@@ -17,5 +17,4 @@ import org.intellij.lang.annotations.Language;
 @jakarta.persistence.Entity
 public class ProtoProcessor$JavaScript extends ProtoProcessor {
     @Basic @Language("JavaScript") String script;
-    public interface Repo extends ProtoProcessor.Repo<ProtoProcessor$JavaScript> {}
 }

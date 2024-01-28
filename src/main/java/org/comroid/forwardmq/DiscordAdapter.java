@@ -25,8 +25,14 @@ import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Event;
 import org.comroid.api.func.util.Streams;
 import org.comroid.forwardmq.dto.Config;
+import org.comroid.forwardmq.entity.DataFlow;
+import org.comroid.forwardmq.entity.proto.adapter.discord.ProtoAdapter$DiscordChannel;
+import org.comroid.forwardmq.entity.proto.adapter.rabbit.ProtoAdapter$Rabbit;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.URI;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -65,7 +71,27 @@ public class DiscordAdapter implements Command.Handler {
     }
 
     @Command
-    public void link() {/*todo*/}
+    @SneakyThrows
+    public void link(SlashCommandInteractionEvent event) {
+        final var dfm = bean(DataFlowManager.class);
+        var amqpUri = new URI(event.getOption("amqp-uri").getAsString());
+        var exchangeName = event.getOption("exchange-name").getAsString();
+
+        var ac2dc = dfm.getProcessorRepo_js().findById(UUID.fromString(""/*todo*/)).orElseThrow(); // rectifier
+        var dc2ac = dfm.getProcessorRepo_js().findById(UUID.fromString(""/*todo*/)).orElseThrow(); // inverter
+        var discord = new ProtoAdapter$DiscordChannel(event.getChannelIdLong());
+        var rabbit = new ProtoAdapter$Rabbit(amqpUri, exchangeName, null, null);
+        var d2r = new DataFlow(discord, rabbit, List.of(dc2ac));
+        var r2d = new DataFlow(rabbit, discord, List.of(ac2dc));
+
+        dfm.getAdapterRepo_dc().save(discord);
+        dfm.getAdapterRepo_mq().save(rabbit);
+        dfm.getFlowRepo().save(d2r);
+        dfm.getFlowRepo().save(r2d);
+
+        dfm.init(d2r);
+        dfm.init(r2d);
+    }
     @Command
     public void status() {/*todo*/}
 
