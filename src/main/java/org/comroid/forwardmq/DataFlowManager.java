@@ -47,11 +47,11 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
     private final Map<ProtoProcessor, DataProcessor<?>> processorCache = new ConcurrentHashMap<>();
     private final Map<DataFlow, DataFlowRunner> runnerCache = new ConcurrentHashMap<>();
     private @Autowired ForwardMQ fmq;
-    private @Autowired DiscordChannelAdapterRepo adapterRepo_dc;
-    private @Autowired DiscordWebhookAdapterRepo adapterRepo_dw;
-    private @Autowired RabbitAdapterRepo adapterRepo_mq;
-    private @Autowired JavaScriptProcessorRepo processorRepo_js;
-    private @Autowired DataFlow.Repo flowRepo;
+    private @Autowired ProtoAdapter$DiscordChannel$Repo adapterRepo_dc;
+    private @Autowired ProtoAdapter$DiscordWebhook$Repo adapterRepo_dw;
+    private @Autowired ProtoAdapter$Rabbit$Repo adapterRepo_mq;
+    private @Autowired ProtoProcessor$JavaScript$Repo processorRepo_js;
+    private @Autowired DataFlow$Repo flowRepo;
     private @Autowired ScheduledExecutorService executor;
 
     @Override
