@@ -46,6 +46,8 @@ public abstract class Entity {
     }
 
     public interface Repo<T extends Entity> extends CrudRepository<T, UUID> {
+        Optional<T> findByName(String name);
+
         Iterable<T> findAllByName(String name);
 
         @Query("SELECT e FROM #{#entityName} e WHERE e.version = null OR e.version <= :version")
