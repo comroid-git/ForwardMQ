@@ -9,9 +9,11 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.GenericEvent;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import net.dv8tion.jda.api.interactions.commands.Command.Choice;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -20,6 +22,8 @@ import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.Compression;
 import org.comroid.api.Polyfill;
+import org.comroid.api.attr.IntegerAttribute;
+import org.comroid.api.attr.Named;
 import org.comroid.api.data.seri.DataNode;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Event;
@@ -49,16 +53,25 @@ public class DiscordAdapter implements Command.Handler {
     @SneakyThrows
     public DiscordAdapter(Config config) {
         this.bus = new Event.Bus<>("Discord Event Bus");
-        this.cmdr = new Command.Manager(this);
         this.config = config;
         this.jda = JDABuilder.create(config.getDiscordToken(), GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS))
                 .setCompression(Compression.ZLIB)
                 .addEventListeners((EventListener) bus::publish)
                 .build()
                 .awaitReady();
+        var adp = new Command.Ada
+        this.cmdr = new Command.Manager(jda, this);
 
         bus.flatMap(SlashCommandInteractionEvent.class).listen()
                 .subscribeData(event -> cmdr.execute(event.getName(), event, event.getUser(), event.getGuild(), event.getChannel()));
+        bus.flatMap(CommandAutoCompleteInteractionEvent.class).listen()
+                .subscribeData(event -> {
+                    var option = event.getFocusedOption();
+                    event.replyChoices(cmdr.autoComplete(event.getName(), option.getName(), option.getValue())
+                                    .map(e -> new Choice(e.getKey(), e.getValue()))
+                                    .toList())
+                            .queue();
+                });
         jda.updateCommands().addCommands(
                 Commands.slash("link", "Link this channel to the specified AMQP Exchange")
                         .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
@@ -72,7 +85,7 @@ public class DiscordAdapter implements Command.Handler {
 
     @Command
     @SneakyThrows
-    public void link(SlashCommandInteractionEvent event) {
+    public void link(SlashCommandInteractionEvent event, @Command.Arg String amqpUri, @Command.Arg String exchangeName, @Command.Arg LinkType type) {
         final var dfm = bean(DataFlowManager.class);
         var amqpUri = new URI(event.getOption("amqp-uri").getAsString());
         var exchangeName = event.getOption("exchange-name").getAsString();
@@ -137,5 +150,9 @@ public class DiscordAdapter implements Command.Handler {
                 .mapData(DataNode::of)
                 .listen()
                 .subscribeData(source);
+    }
+
+    public enum LinkType implements Named, IntegerAttribute {
+        AurionChat
     }
 }
