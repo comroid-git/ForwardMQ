@@ -89,25 +89,6 @@ public class ForwardMQ {
 
 	@Bean
 	@Lazy(false)
-	public ScheduledFuture<?> shutdownForAutoUpdateTask(@Autowired ScheduledExecutorService scheduler) {
-		return scheduler.scheduleAtFixedRate(()->{
-			try {
-				var info = REST.get("https://api.github.com/repos/comroid-git/mc-server-hub/commits/main?per_page=1")
-						.join().getBody();
-				var recent = info.get("sha").asString();
-				var current = DelegateStream.readAll(ClassLoader.getSystemResourceAsStream("commit.txt"));
-				if (!current.equals(recent)) {
-					log.info("Shutting down for auto update");
-					System.exit(0);
-				}
-			} catch (Throwable t) {
-				log.error("Unable to fetch latest commit", t);
-			}
-		}, 72, 72, TimeUnit.HOURS);
-	}
-
-	@Bean
-	@Lazy(false)
 	@Transactional
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	@DependsOn("applicationContextProvider")
