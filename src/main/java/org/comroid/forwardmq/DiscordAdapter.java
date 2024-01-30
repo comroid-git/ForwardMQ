@@ -9,11 +9,9 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.GenericEvent;
-import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
-import net.dv8tion.jda.api.interactions.commands.Command.Choice;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -21,6 +19,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.Compression;
+import org.comroid.annotations.Description;
 import org.comroid.api.Polyfill;
 import org.comroid.api.attr.IntegerAttribute;
 import org.comroid.api.attr.Named;
@@ -33,6 +32,7 @@ import org.comroid.forwardmq.entity.DataFlow;
 import org.comroid.forwardmq.entity.proto.adapter.discord.ProtoAdapter$DiscordChannel;
 import org.comroid.forwardmq.entity.proto.adapter.rabbit.ProtoAdapter$Rabbit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.List;
@@ -59,41 +59,23 @@ public class DiscordAdapter implements Command.Handler {
                 .addEventListeners((EventListener) bus::publish)
                 .build()
                 .awaitReady();
-        var adp = new Command.Ada
-        this.cmdr = new Command.Manager(jda, this);
-
-        bus.flatMap(SlashCommandInteractionEvent.class).listen()
-                .subscribeData(event -> cmdr.execute(event.getName(), event, event.getUser(), event.getGuild(), event.getChannel()));
-        bus.flatMap(CommandAutoCompleteInteractionEvent.class).listen()
-                .subscribeData(event -> {
-                    var option = event.getFocusedOption();
-                    event.replyChoices(cmdr.autoComplete(event.getName(), option.getName(), option.getValue())
-                                    .map(e -> new Choice(e.getKey(), e.getValue()))
-                                    .toList())
-                            .queue();
-                });
-        jda.updateCommands().addCommands(
-                Commands.slash("link", "Link this channel to the specified AMQP Exchange")
-                        .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
-                        .addOption(OptionType.STRING, "amqp-uri", "The AMQP URL to connect to", true)
-                        .addOption(OptionType.STRING, "exchange-name", "The AMQP exchange name to connect to", true)
-                        .addOption(OptionType.STRING, "data-scheme", "The data scheme to refer to", true, true),
-                Commands.slash("status", "See AMQP channel status")
-                        .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
-        ).queue();
+        this.cmdr = new Command.Manager(this);
+        cmdr.new Adapter$JDA(jda);
+        cmdr.initialize();
     }
 
-    @Command
     @SneakyThrows
-    public void link(SlashCommandInteractionEvent event, @Command.Arg String amqpUri, @Command.Arg String exchangeName, @Command.Arg LinkType type) {
+    @Command(permission = "16", ephemeral = true)
+    @Description("Link this channel to the specified AMQP Exchange")
+    public void link(SlashCommandInteractionEvent event,
+                     @Description("The AMQP URL to connect to") @Command.Arg String amqpUri,
+                     @Description("The AMQP exchange name to connect to") @Command.Arg(autoFill = {"aurion.chat"}) String exchangeName,
+                     @Description("The data scheme to refer to") @Command.Arg LinkType type) {
         final var dfm = bean(DataFlowManager.class);
-        var amqpUri = new URI(event.getOption("amqp-uri").getAsString());
-        var exchangeName = event.getOption("exchange-name").getAsString();
-
         var ac2dc = dfm.getProcessorRepo_js().findById(UUID.fromString(""/*todo*/)).orElseThrow(); // rectifier
         var dc2ac = dfm.getProcessorRepo_js().findById(UUID.fromString(""/*todo*/)).orElseThrow(); // inverter
         var discord = new ProtoAdapter$DiscordChannel(event.getChannelIdLong());
-        var rabbit = new ProtoAdapter$Rabbit(amqpUri, exchangeName, null, null);
+        var rabbit = new ProtoAdapter$Rabbit(new URI(amqpUri), exchangeName, null, null);
         var d2r = new DataFlow(discord, rabbit, List.of(dc2ac));
         var r2d = new DataFlow(rabbit, discord, List.of(ac2dc));
 
@@ -105,7 +87,9 @@ public class DiscordAdapter implements Command.Handler {
         dfm.init(d2r);
         dfm.init(r2d);
     }
-    @Command
+
+    @Command(permission = "16", ephemeral = true)
+    @Description("See AMQP channel status")
     public void status() {/*todo*/}
 
     @Override
@@ -152,7 +136,7 @@ public class DiscordAdapter implements Command.Handler {
                 .subscribeData(source);
     }
 
-    public enum LinkType implements Named, IntegerAttribute {
+    public enum LinkType implements Named {
         AurionChat
     }
 }
