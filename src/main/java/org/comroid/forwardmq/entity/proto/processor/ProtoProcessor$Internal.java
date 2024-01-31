@@ -1,6 +1,7 @@
 package org.comroid.forwardmq.entity.proto.processor;
 
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
@@ -11,18 +12,23 @@ import org.comroid.forwardmq.model.IDataProcessor;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Log
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
+//@AllArgsConstructor
 @jakarta.persistence.Entity
-public abstract class ProtoProcessor$Internal extends ProtoProcessor {
+public class ProtoProcessor$Internal extends ProtoProcessor {
+    public ProtoProcessor$Internal(UUID id, String name, String displayName) {
+        setId(id);
+        setName(name);
+        setDisplayName(displayName);
+    }
+
     @Instance
-    public Optional<IDataProcessor> resolve(DataFlowManager dfm) {
-        return dfm.getInternalProcessorCache().stream()
-                .filter(proc -> Objects.equals(getName(), proc.getProto().getName()))
-                .findAny();
+    public Optional<IDataProcessor<ProtoProcessor$Internal>> resolve(DataFlowManager dfm) {
+        return dfm.getInternalProcessor(getName());
     }
 
     public interface Repo<T extends ProtoProcessor$Internal> extends Proto.Repo<T> {}

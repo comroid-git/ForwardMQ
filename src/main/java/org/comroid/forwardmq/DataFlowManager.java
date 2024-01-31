@@ -21,6 +21,7 @@ import org.comroid.forwardmq.data.ProtoImplementation;
 import org.comroid.forwardmq.data.adapter.DataAdapter;
 import org.comroid.forwardmq.data.processor.DataProcessor;
 import org.comroid.forwardmq.entity.DataFlow;
+import org.comroid.forwardmq.entity.Entity;
 import org.comroid.forwardmq.entity.proto.Proto;
 import org.comroid.forwardmq.entity.proto.adapter.ProtoAdapter;
 import org.comroid.forwardmq.entity.proto.processor.ProtoProcessor;
@@ -30,6 +31,7 @@ import org.comroid.forwardmq.model.IDataProcessor;
 import org.comroid.forwardmq.repo.*;
 import org.comroid.forwardmq.util.Util;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -57,15 +59,14 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
     public static final UUID InternalProcessorId_Aurion2Discord = UUID.fromString("a593c1f6-7073-4f72-b360-c767d284ba12");
     public static final UUID InternalProcessorId_Discord2Aurion = UUID.fromString("a16b03f3-807e-4c06-8571-b3dc18db8ac3");
     private final Map<ProtoAdapter, DataAdapter<?>> adapterCache = new ConcurrentHashMap<>();
-    private final Map<ProtoProcessor, IDataProcessor> processorCache = new ConcurrentHashMap<>();
+    private final Map<ProtoProcessor, IDataProcessor<?>> processorCache = new ConcurrentHashMap<>();
     private final Map<DataFlow, DataFlowRunner> runnerCache = new ConcurrentHashMap<>();
-    private final List<IDataProcessor> internalProcessorCache = List.of(
-            new IDataProcessor() {
-                final ProtoProcessor$Internal proto = new ProtoProcessor$Internal() {{
-                    setId(InternalProcessorId_Aurion2Discord);
-                    setName("aurion2discord");
-                    setDisplayName("AurionChat to Discord message converter");
-                }};
+    private final List<IDataProcessor<ProtoProcessor$Internal>> internalProcessorCache = List.of(
+            new IDataProcessor<>() {
+                final ProtoProcessor$Internal proto = new ProtoProcessor$Internal(
+                        InternalProcessorId_Aurion2Discord,
+                        "aurion2discord",
+                        "AurionChat to Discord message converter");
 
                 @Override
                 public ProtoProcessor$Internal getProto() {
@@ -85,12 +86,10 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
                             .build();
                 }
             },
-            new IDataProcessor() {
-                final ProtoProcessor$Internal proto = new ProtoProcessor$Internal() {{
-                    setId(InternalProcessorId_Discord2Aurion);
-                    setName("discord2aurion");
-                    setDisplayName("Discord to AurionChat message converter");
-                }};
+            new IDataProcessor<>() {
+                final ProtoProcessor$Internal proto = new ProtoProcessor$Internal(InternalProcessorId_Discord2Aurion,
+                        "discord2aurion",
+                        "Discord to AurionChat message converter");
 
                 @Override
                 public ProtoProcessor$Internal getProto() {
@@ -136,16 +135,16 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
 
     @Override
     public void run(ApplicationArguments args) {
+        var added = new HashSet<ProtoProcessor$Internal>();
         for (var idp : internalProcessorCache) {
-            var added = new HashSet<ProtoProcessor$Internal>();
             var proto = idp.getProto();
             if (processorRepo_$$.findByName(proto.getName()).isEmpty()) {
                 processorRepo_$$.save(proto);
                 added.add(proto);
             }
-            log.info("Added " + added.size() + " new internal processors to DB");
-            log.fine(Arrays.toString(added.toArray()));
         }
+        log.info("Added " + added.size() + " new internal processors to DB");
+        log.fine(Arrays.toString(added.toArray()));
 
         execute(executor, Duration.ofMinutes(1));
     }
@@ -197,12 +196,18 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
         });
     }
 
+    public Optional<IDataProcessor<ProtoProcessor$Internal>> getInternalProcessor(final @Nullable String name) {
+        return internalProcessorCache.stream()
+                .filter(internal -> Objects.equals(name, internal.getProto().getName()))
+                .findAny();
+    }
+
     @Value
     public class DataFlowRunner extends Thread {
         Queue<DataNode> queue = new LinkedBlockingQueue<>();
         DataFlow flow;
         Event.Listener<DataNode> source;
-        List<? extends IDataProcessor> processors;
+        List<? extends IDataProcessor<?>> processors;
         DataAdapter<?> destination;
 
         public DataFlowRunner(DataFlow flow) {
@@ -212,7 +217,9 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
                     .getSource().listen()
                     .subscribeData(this::push);
             this.processors = flow.getProcessors().stream()
-                    .map(proto -> processorCache.getOrDefault(proto, null))
+                    .flatMap(proto -> proto instanceof ProtoProcessor$Internal
+                            ? getInternalProcessor(proto.getName()).stream()
+                            : Stream.of(processorCache.getOrDefault(proto, null)))
                     .filter(Objects::nonNull)
                     .toList();
             this.destination = adapterCache.get(flow.getDestination());

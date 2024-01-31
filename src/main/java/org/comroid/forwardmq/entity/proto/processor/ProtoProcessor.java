@@ -9,7 +9,7 @@ import org.comroid.forwardmq.entity.proto.Proto;
 @Log
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
+//@AllArgsConstructor
 @jakarta.persistence.Entity
 public abstract class ProtoProcessor extends Proto {
     public interface Repo<T extends ProtoProcessor> extends Proto.Repo<T> {}

@@ -37,3 +37,5 @@ out/
 .vscode/
 src/core/main/resources/static/api/open/info/build_history.txt
 src/core/main/resources/static/api/open/info/commit.txt
+
+notes.txt

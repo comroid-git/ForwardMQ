@@ -36,6 +36,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.comroid.forwardmq.util.ApplicationContextProvider.bean;
@@ -158,6 +159,11 @@ public class DiscordAdapter implements Command.Handler {
         @Nullable Author author;
         @Singular List<EmbedBuilder> embeds;
         @Singular List<String> attachmentUrls;
+
+        @Override
+        public String toSerializedString() {
+            return content + attachmentUrls.stream().collect(Collectors.joining(" ", " ", ""));
+        }
     }
 
     @Value
@@ -167,5 +173,10 @@ public class DiscordAdapter implements Command.Handler {
         String effectiveName;
         String avatarUrl;
         @Nullable Color color;
+
+        @Override
+        public String toSerializedString() {
+            return effectiveName;
+        }
     }
 }

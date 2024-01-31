@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 @UtilityClass
 public class Util {
-    public String componentString(Component comp) {
+    public static String componentString(Component comp) {
         if (comp instanceof TextComponent text)
             return text.content() + comp.children().stream()
                     .map(Util::componentString)
