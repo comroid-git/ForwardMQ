@@ -72,14 +72,17 @@ public class DiscordAdapter implements Command.Handler {
         final var dfm = bean(DataFlowManager.class);
         var ac2dc = dfm.getProcessorRepo_$$()
                 .findByName("aurion2discord")
-                .orElseThrow(()->new NoSuchElementException("Missing processor: aurion2discord"));
+                .orElseThrow(() -> new NoSuchElementException("Missing processor: aurion2discord"));
         var dc2ac = dfm.getProcessorRepo_$$()
                 .findByName("discord2aurion")
-                .orElseThrow(()->new NoSuchElementException("Missing processor: discord2aurion"));
+                .orElseThrow(() -> new NoSuchElementException("Missing processor: discord2aurion"));
         var discord = new ProtoAdapter$DiscordChannel(event.getChannelIdLong());
         var rabbit = new ProtoAdapter$Rabbit(new URI(amqpUri), exchangeName, null, null);
         var d2r = new DataFlow(discord, rabbit, List.of(dc2ac));
         var r2d = new DataFlow(rabbit, discord, List.of(ac2dc));
+
+        Stream.of(discord, rabbit, d2r, r2d).forEach(e -> e
+                .setDisplayName(e.getClass().getSimpleName() + " for discord channel " + event.getChannel().getName()));
 
         dfm.getAdapterRepo_dc().save(discord);
         dfm.getAdapterRepo_mq().save(rabbit);
