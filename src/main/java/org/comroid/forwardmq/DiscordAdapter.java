@@ -68,9 +68,9 @@ public class DiscordAdapter implements Command.Handler {
     @Command(permission = "16", ephemeral = true)
     @Description("Link this channel to the specified AMQP Exchange")
     public void link(SlashCommandInteractionEvent event,
-                     @Description("The AMQP URL to connect to") @Command.Arg String amqpUri,
-                     @Description("The AMQP exchange name to connect to") @Command.Arg(autoFill = {"aurion.chat"}) String exchangeName,
-                     @Description("The data scheme to refer to") @Command.Arg LinkType type) {
+                     @Command.Arg @Description("The AMQP URL to connect to") String amqpUri,
+                     @Command.Arg(autoFill = {"aurion.chat"}) @Description("The AMQP exchange name to connect to") String exchangeName,
+                     @Command.Arg @Description("The data scheme to refer to") LinkType type) {
         final var dfm = bean(DataFlowManager.class);
         var ac2dc = dfm.getProcessorRepo_js().findById(UUID.fromString(""/*todo*/)).orElseThrow(); // rectifier
         var dc2ac = dfm.getProcessorRepo_js().findById(UUID.fromString(""/*todo*/)).orElseThrow(); // inverter
