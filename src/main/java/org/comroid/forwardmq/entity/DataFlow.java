@@ -21,5 +21,5 @@ import java.util.List;
 public class DataFlow extends Entity {
     @ManyToOne ProtoAdapter source;
     @ManyToOne ProtoAdapter destination;
-    @ManyToMany List<ProtoProcessor> processors;
+    @ManyToMany List<ProtoProcessor> processor;
 }

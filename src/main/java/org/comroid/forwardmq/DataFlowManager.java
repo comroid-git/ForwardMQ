@@ -80,29 +80,8 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
 
     @Override
     protected void $initialize() {
-        var helper = new Object() {
-            <R extends Proto.Repo<? extends P>, P extends Proto, I extends ProtoImplementation<P>> long initFromProto(
-                    Stream<? extends R> repos, Class<? super P> proto, Class<? super I> impl, Map<? super P, ? super I> map) {
-                return repos.map(CrudRepository::findAll)
-                        .flatMap(Streams::of)
-                        .flatMap(it -> Annotations.related(it.getClass())
-                                .map(DataStructure::of)
-                                .flatMap(struct -> struct.getConstructors().stream())
-                                .filter(ctor -> ctor.getArgs().size() == 1 && proto.isAssignableFrom(ctor.getArgs().get(0).getType()))
-                                .map(DataStructure.Constructor::getCtor)
-                                .map(ThrowingFunction.fallback(ctor -> ctor.invoke(null, it), Wrap.empty()))
-                                .filter(impl::isInstance)
-                                .map(Polyfill::<I>uncheckedCast))
-                        .peek(i -> map.put(i.getProto(), i))
-                        .count();
-            }
-        };
-        var adapterCount = helper.<ProtoAdapter.Repo<? extends ProtoAdapter>, ProtoAdapter, DataAdapter<ProtoAdapter>>initFromProto(
-                Stream.of(adapterRepo_dc, adapterRepo_dw, adapterRepo_mq),
-                ProtoAdapter.class, DataAdapter.class, adapterCache);
-        var processorCount = helper.<ProtoProcessor.Repo<? extends ProtoProcessor>, ProtoProcessor, DataProcessor<ProtoProcessor>>initFromProto(
-                Stream.of(processorRepo_js),
-                ProtoProcessor.class, DataProcessor.class, processorCache);
+        var adapterCount = reloadAdapters();
+        var processorCount = reloadProcessors();
         var flowCount = Streams.of(flowRepo.findAll())
                 .peek(this::init)
                 .count();
@@ -117,7 +96,22 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
         runnerCache.clear();
     }
 
-    public void init(DataFlow flow) {
+    public Optional<IDataProcessor<ProtoProcessor$Internal>> getInternalProcessor(final @Nullable String name) {
+        return internalProcessorCache.stream()
+                .filter(internal -> Objects.equals(name, internal.getProto().getName()))
+                .findAny();
+    }
+
+    public void start(DataFlow... flows) {
+        if (Arrays.stream(flows).allMatch(runnerCache::containsKey))
+            return; // all running already
+        reloadAdapters();
+        reloadProcessors();
+        for (var flow : flows)
+            init(flow);
+    }
+
+    private void init(DataFlow flow) {
         runnerCache.computeIfAbsent(flow, it -> {
             var runner = new DataFlowRunner(it);
             runner.start();
@@ -125,10 +119,34 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
         });
     }
 
-    public Optional<IDataProcessor<ProtoProcessor$Internal>> getInternalProcessor(final @Nullable String name) {
-        return internalProcessorCache.stream()
-                .filter(internal -> Objects.equals(name, internal.getProto().getName()))
-                .findAny();
+    private synchronized long reloadProcessors() {
+        processorCache.clear();
+        return DataFlowManager.<ProtoProcessor.Repo<? extends ProtoProcessor>, ProtoProcessor, DataProcessor<ProtoProcessor>>initFromProto(
+                Stream.of(processorRepo_js),
+                ProtoProcessor.class, DataProcessor.class, processorCache);
+    }
+
+    private synchronized long reloadAdapters() {
+        adapterCache.clear();
+        return DataFlowManager.<ProtoAdapter.Repo<? extends ProtoAdapter>, ProtoAdapter, DataAdapter<ProtoAdapter>>initFromProto(
+                Stream.of(adapterRepo_dc, adapterRepo_dw, adapterRepo_mq),
+                ProtoAdapter.class, DataAdapter.class, adapterCache);
+    }
+
+    private static <R extends Proto.Repo<? extends P>, P extends Proto, I extends ProtoImplementation<P>> long initFromProto(
+            Stream<? extends R> repos, Class<? super P> proto, Class<? super I> impl, Map<? super P, ? super I> map) {
+        return repos.map(CrudRepository::findAll)
+                .flatMap(Streams::of)
+                .flatMap(it -> Annotations.related(it.getClass())
+                        .map(DataStructure::of)
+                        .flatMap(struct -> struct.getConstructors().stream())
+                        .filter(ctor -> ctor.getArgs().size() == 1 && proto.isAssignableFrom(ctor.getArgs().get(0).getType()))
+                        .map(DataStructure.Constructor::getCtor)
+                        .map(ThrowingFunction.fallback(ctor -> ctor.invoke(null, it), Wrap.empty()))
+                        .filter(impl::isInstance)
+                        .map(Polyfill::<I>uncheckedCast))
+                .peek(i -> map.put(i.getProto(), i))
+                .count();
     }
 
     @Value
@@ -145,7 +163,7 @@ public class DataFlowManager extends Component.Base implements ApplicationRunner
             this.source = adapterCache.get(flow.getSource())
                     .getSource().listen()
                     .subscribeData(this::push);
-            this.processors = flow.getProcessors().stream()
+            this.processors = flow.getProcessor().stream()
                     .flatMap(proto -> proto instanceof ProtoProcessor$Internal
                             ? getInternalProcessor(proto.getName()).stream()
                             : Stream.of(processorCache.getOrDefault(proto, null)))

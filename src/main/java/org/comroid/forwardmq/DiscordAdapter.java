@@ -89,8 +89,7 @@ public class DiscordAdapter implements Command.Handler {
         dfm.getFlowRepo().save(d2r);
         dfm.getFlowRepo().save(r2d);
 
-        dfm.init(d2r);
-        dfm.init(r2d);
+        dfm.start(r2d, d2r);
     }
 
     @Command(permission = "16", ephemeral = true)
