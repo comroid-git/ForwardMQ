@@ -13,8 +13,12 @@ import org.intellij.lang.annotations.Language;
 @Log
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
+//@AllArgsConstructor
 @jakarta.persistence.Entity
 public class ProtoProcessor$JavaScript extends ProtoProcessor {
-    @Basic @Language("JavaScript") String script;
+    @Basic String script;
+
+    public ProtoProcessor$JavaScript(@Language(value = "JavaScript",prefix = "function(data,json){\n",suffix = "\n}") String script) {
+        this.script = script;
+    }
 }

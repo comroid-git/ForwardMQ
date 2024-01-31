@@ -1,4 +1,4 @@
-package org.comroid.forwardmq.dto;
+package org.comroid.forwardmq.dto.system;
 
 import lombok.Value;
 

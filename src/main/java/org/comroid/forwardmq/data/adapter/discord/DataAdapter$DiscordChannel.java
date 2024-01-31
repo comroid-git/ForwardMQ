@@ -20,7 +20,7 @@ import static org.comroid.forwardmq.util.ApplicationContextProvider.bean;
 @Value
 public class DataAdapter$DiscordChannel extends DataAdapter<ProtoAdapter$DiscordChannel> {
     TextChannel channel;
-    Event.Listener<DataNode> listener;
+    Event.Listener<DiscordAdapter.Message> listener;
 
     public DataAdapter$DiscordChannel(ProtoAdapter$DiscordChannel proto) {
         super(proto);
@@ -32,6 +32,10 @@ public class DataAdapter$DiscordChannel extends DataAdapter<ProtoAdapter$Discord
 
     @Override
     public void accept(DataNode data) {
-        channel.sendMessage(data.toSerializedString()).queue();
+        String str;
+        if (data instanceof DiscordAdapter.Message msg)
+            str = msg.getContent();
+        else str = data.toSerializedString();
+        channel.sendMessage(str).queue();
     }
 }

@@ -1,42 +1,39 @@
 package org.comroid.forwardmq;
 
-import lombok.SneakyThrows;
-import lombok.Value;
+import lombok.*;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
-import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
-import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.Compression;
 import org.comroid.annotations.Description;
 import org.comroid.api.Polyfill;
-import org.comroid.api.attr.IntegerAttribute;
 import org.comroid.api.attr.Named;
 import org.comroid.api.data.seri.DataNode;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Event;
 import org.comroid.api.func.util.Streams;
-import org.comroid.forwardmq.dto.Config;
+import org.comroid.forwardmq.dto.system.Config;
 import org.comroid.forwardmq.entity.DataFlow;
 import org.comroid.forwardmq.entity.proto.adapter.discord.ProtoAdapter$DiscordChannel;
 import org.comroid.forwardmq.entity.proto.adapter.rabbit.ProtoAdapter$Rabbit;
+import org.comroid.forwardmq.entity.proto.processor.ProtoProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.net.URI;
 import java.util.List;
-import java.util.UUID;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -72,8 +69,12 @@ public class DiscordAdapter implements Command.Handler {
                      @Command.Arg(autoFill = {"aurion.chat"}) @Description("The AMQP exchange name to connect to") String exchangeName,
                      @Command.Arg @Description("The data scheme to refer to") LinkType type) {
         final var dfm = bean(DataFlowManager.class);
-        var ac2dc = dfm.getProcessorRepo_js().findById(UUID.fromString(""/*todo*/)).orElseThrow(); // rectifier
-        var dc2ac = dfm.getProcessorRepo_js().findById(UUID.fromString(""/*todo*/)).orElseThrow(); // inverter
+        var ac2dc = dfm.getProcessorRepo_$$()
+                .findByName("aurion2discord")
+                .orElseThrow(()->new NoSuchElementException("Missing processor: aurion2discord"));
+        var dc2ac = dfm.getProcessorRepo_$$()
+                .findByName("discord2aurion")
+                .orElseThrow(()->new NoSuchElementException("Missing processor: discord2aurion"));
         var discord = new ProtoAdapter$DiscordChannel(event.getChannelIdLong());
         var rabbit = new ProtoAdapter$Rabbit(new URI(amqpUri), exchangeName, null, null);
         var d2r = new DataFlow(discord, rabbit, List.of(dc2ac));
@@ -106,7 +107,7 @@ public class DiscordAdapter implements Command.Handler {
             e.deferReply().setEphemeral(cmd.ephemeral())
                     .submit()
                     .thenCombine(((CompletableFuture<?>) response), (hook, resp) -> {
-                        WebhookMessageCreateAction<Message> req;
+                        WebhookMessageCreateAction<net.dv8tion.jda.api.entities.Message> req;
                         if (resp instanceof EmbedBuilder)
                             req = hook.sendMessageEmbeds(embed((EmbedBuilder) resp, user).build());
                         else req = hook.sendMessage(String.valueOf(resp));
@@ -123,20 +124,48 @@ public class DiscordAdapter implements Command.Handler {
         }
     }
 
-    private EmbedBuilder embed(EmbedBuilder base, User user) {
+    private EmbedBuilder embed(EmbedBuilder base, net.dv8tion.jda.api.entities.User user) {
         return base.setAuthor(user.getName(), "https://forwardmq.comroid.org", user.getAvatarUrl());
     }
 
-    public Event.Listener<DataNode> listen(final long channelId, Event.Bus<DataNode> source) {
+    public Event.Listener<Message> listen(final long channelId, Event.Bus<DataNode> source) {
         return bus.flatMap(MessageReceivedEvent.class)
                 .filterData(e -> e.getChannel().getIdLong() == channelId)
                 .mapData(MessageReceivedEvent::getMessage)
-                .mapData(DataNode::of)
+                .mapData(msg -> Message.builder()
+                        .content(msg.getContentStripped())
+                        .author(Author.builder()
+                                .name(msg.getAuthor().getName())
+                                .effectiveName(msg.getAuthor().getEffectiveName())
+                                .avatarUrl(msg.getAuthor().getAvatarUrl())
+                                .color(Optional.ofNullable(msg.getMember())
+                                        .map(Member::getColor)
+                                        .orElse(null))
+                                .build())
+                        .build())
                 .listen()
-                .subscribeData(source);
+                .subscribeData(source::publish);
     }
 
     public enum LinkType implements Named {
         AurionChat
+    }
+
+    @Value
+    @Builder
+    public static class Message implements DataNode {
+        String content;
+        @Nullable Author author;
+        @Singular List<EmbedBuilder> embeds;
+        @Singular List<String> attachmentUrls;
+    }
+
+    @Value
+    @Builder
+    public static class Author implements DataNode {
+        String name;
+        String effectiveName;
+        String avatarUrl;
+        @Nullable Color color;
     }
 }

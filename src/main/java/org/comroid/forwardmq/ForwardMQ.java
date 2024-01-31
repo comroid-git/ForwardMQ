@@ -3,11 +3,9 @@ package org.comroid.forwardmq;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.comroid.api.func.util.DelegateStream;
 import org.comroid.api.io.FileHandle;
-import org.comroid.api.net.REST;
 import org.comroid.api.os.OS;
-import org.comroid.forwardmq.dto.Config;
+import org.comroid.forwardmq.dto.system.Config;
 import org.comroid.forwardmq.entity.Entity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -24,14 +22,9 @@ import org.springframework.core.annotation.Order;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 @Slf4j
 @ImportResource({"classpath:beans.xml"})

@@ -103,8 +103,12 @@ dependencies {
 	implementation 'net.dv8tion:JDA:5.+'
 	implementation 'club.minnced:discord-webhooks:0.+'
 
-	// minecraft tellraw adapter
-	implementation 'net.kyori:adventure-api:4.11.0'
+	// emoji
+	implementation 'com.kcthota:emoji4j:6.+'
+
+	// minecraft
+	implementation 'net.kyori:adventure-api:4.+'
+	implementation 'net.kyori:adventure-text-serializer-gson:4.+'
 
 	// util
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

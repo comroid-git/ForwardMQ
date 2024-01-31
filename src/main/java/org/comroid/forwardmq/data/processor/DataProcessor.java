@@ -6,7 +6,7 @@ import org.comroid.forwardmq.entity.proto.processor.ProtoProcessor;
 
 import java.util.function.UnaryOperator;
 
-public abstract class DataProcessor<Proto extends ProtoProcessor> extends ProtoImplementation<Proto> implements UnaryOperator<DataNode> {
+public abstract class DataProcessor<Proto extends ProtoProcessor> extends ProtoImplementation<Proto> implements org.comroid.forwardmq.model.IDataProcessor {
     public DataProcessor(Proto proto) {
         super(proto);
     }
