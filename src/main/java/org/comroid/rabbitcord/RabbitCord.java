@@ -119,12 +119,15 @@ public enum RabbitCord implements Command.Handler {
                 var message = event.getMessage();
                 var str = message.getContentStripped() + message.getAttachments().stream()
                         .map(Message.Attachment::getUrl)
-                        .collect(Collectors.joining(" "," ",""))
+                        .collect(Collectors.joining(" ", " ", ""))
                         .trim();
                 //str = TextDecoration.sanitize(str, Markdown.class);
 
-                var comp = text("DISCORD ", TextColor.color(86, 98, 246))
-                        .clickEvent(ClickEvent.openUrl(channels.get(channelId).getConfig().getGuildId()))
+                var inviteUrl = channels.get(channelId).getConfig().getInviteUrl();
+                var discord = text("DISCORD ", TextColor.color(86, 98, 246));
+                if (inviteUrl != null)
+                    discord = discord.clickEvent(ClickEvent.openUrl(inviteUrl));
+                var comp = discord
                         .append(text(EmojiUtils.removeAllEmojis(author.getEffectiveName()).trim(), TextColor.color(Objects.requireNonNull(message.getMember()).getColorRaw())))
                         .append(text(": " + str, TextColor.color(0xFF_FF_FF)));
                 channels.get(channelId).sendToRabbit(comp);
@@ -177,7 +180,7 @@ public enum RabbitCord implements Command.Handler {
         var conn = new DiscordChannelConnection(config);
         conn.initialize();
         channels.put(id, conn);
-        DirChannels.createSubFile(id +".json").setContent(config.json());
+        DirChannels.createSubFile(id + ".json").setContent(config.json());
         return "Channel linked";
     }
 
@@ -187,7 +190,7 @@ public enum RabbitCord implements Command.Handler {
         if (!channels.containsKey(id))
             return "This channel is not linked";
         var old = channels.remove(id);
-        if (!DirChannels.createSubFile(id+".json").delete())
+        if (!DirChannels.createSubFile(id + ".json").delete())
             return "Link could not be removed";
         old.terminate();
         return "Channel was unlinked";

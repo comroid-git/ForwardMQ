@@ -17,6 +17,7 @@ import org.comroid.api.attr.UUIDContainer;
 import org.comroid.api.data.seri.DataNode;
 import org.comroid.api.func.util.Debug;
 import org.comroid.api.tree.Component;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -29,8 +30,10 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 public class DiscordChannelConnection extends Component.Base {
     Config config;
-    @NonFinal Connection connection;
-    @NonFinal Channel channel;
+    @NonFinal
+    Connection connection;
+    @NonFinal
+    Channel channel;
 
     @Override
     @SneakyThrows
@@ -51,7 +54,8 @@ public class DiscordChannelConnection extends Component.Base {
         String queue = channel.queueDeclare().getQueue();
         channel.queueBind(queue, "aurion.chat", "");
 
-        channel.basicConsume(queue, true, this::handleRabbitData, consumerTag -> {});
+        channel.basicConsume(queue, true, this::handleRabbitData, consumerTag -> {
+        });
     }
 
     @Override
@@ -75,7 +79,7 @@ public class DiscordChannelConnection extends Component.Base {
                 .getTextChannelById(config.channelId)
                 .sendMessage(string(component)
                         .replaceAll("[§&]\\w", "")
-                +(Debug.isDebug()?"\n\n```json\n"+GsonComponentSerializer.gson().serializeToTree(component)+"\n```":""))
+                        + (Debug.isDebug() ? "\n\n```json\n" + GsonComponentSerializer.gson().serializeToTree(component) + "\n```" : ""))
                 .queue();
     }
 
@@ -107,7 +111,7 @@ public class DiscordChannelConnection extends Component.Base {
     public static class Config implements DataNode, UUIDContainer {
         long guildId;
         long channelId;
-        String inviteUrl;
+        @Nullable String inviteUrl;
         String amqpUri;
         String exchange;
 
