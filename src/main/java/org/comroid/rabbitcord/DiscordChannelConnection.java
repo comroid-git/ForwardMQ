@@ -107,15 +107,18 @@ public class DiscordChannelConnection extends Component.Base {
     public static class Config implements DataNode, UUIDContainer {
         long guildId;
         long channelId;
+        String inviteUrl;
         String amqpUri;
         String exchange;
 
         public Config(@Alias("guildId") long guildId,
                       @Alias("channelId") long channelId,
+                      @Alias("inviteUrl") String inviteUrl,
                       @Alias("amqpUri") String amqpUri,
                       @Alias("exchange") String exchange) {
             this.guildId = guildId;
             this.channelId = channelId;
+            this.inviteUrl = inviteUrl;
             this.amqpUri = amqpUri;
             this.exchange = exchange;
         }

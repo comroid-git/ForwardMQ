@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Invite;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
@@ -27,6 +28,7 @@ import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.Compression;
 import net.dv8tion.jda.internal.entities.emoji.UnicodeEmojiImpl;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.TextColor;
 import org.comroid.annotations.Alias;
 import org.comroid.api.Polyfill;
@@ -40,11 +42,9 @@ import org.comroid.api.text.Markdown;
 import org.comroid.api.text.TextDecoration;
 import org.comroid.api.tree.Component;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -75,7 +75,6 @@ public enum RabbitCord implements Command.Handler {
                     .asObject()
                     .convert(Config.class);
             bus = new Event.Bus<>();
-            cmdr = new Command.Manager(this);
 
             jda = JDABuilder.createLight(Objects.requireNonNull(config).token,
                             GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS))
@@ -93,6 +92,9 @@ public enum RabbitCord implements Command.Handler {
                     Commands.slash("amqp-unlink", "Removes AMQP link from this channel")
                             .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
             ).queue();
+
+            cmdr = new Command.Manager(this);
+            cmdr.new Adapter$JDA(jda);
 
             channels = Arrays.stream(Objects.requireNonNull(DirChannels.listFiles()))
                     .map(FileHandle::new)
@@ -122,6 +124,7 @@ public enum RabbitCord implements Command.Handler {
                 //str = TextDecoration.sanitize(str, Markdown.class);
 
                 var comp = text("DISCORD ", TextColor.color(86, 98, 246))
+                        .clickEvent(ClickEvent.openUrl(channels.get(channelId).getConfig().getGuildId()))
                         .append(text(EmojiUtils.removeAllEmojis(author.getEffectiveName()).trim(), TextColor.color(Objects.requireNonNull(message.getMember()).getColorRaw())))
                         .append(text(": " + str, TextColor.color(0xFF_FF_FF)));
                 channels.get(channelId).sendToRabbit(comp);
@@ -147,10 +150,28 @@ public enum RabbitCord implements Command.Handler {
     }
 
     @Command(value = "amqp-link", ephemeral = true)
-    public String amqpLink(SlashCommandInteractionEvent event, Guild guild, MessageChannelUnion channel) {
+    public String amqpLink(
+            @Command.Arg String amqpUri,
+            @Command.Arg String exchangeName,
+            @Command.Arg @Nullable String inviteUrl,
+            SlashCommandInteractionEvent event,
+            Guild guild,
+            MessageChannelUnion channel
+    ) {
         var uri = event.getOption("amqp-uri").getAsString();
         var exchange = event.getOption("exchange-name").getAsString();
-        var config = new DiscordChannelConnection.Config(guild.getIdLong(), channel.getIdLong(), uri, exchange);
+        var config = new DiscordChannelConnection.Config(guild.getIdLong(), channel.getIdLong(), guild
+                .retrieveVanityInvite()
+                .map(Polyfill::<Invite>uncheckedCast)
+                .map(List::of)
+                .submit()
+                .exceptionallyCompose(t -> guild.retrieveInvites().submit())
+                .join()
+                .stream()
+                .findAny()
+                .map(Invite::getUrl)
+                .orElse(null),
+                uri, exchange);
         var id = config.getUuid();
 
         var conn = new DiscordChannelConnection(config);
