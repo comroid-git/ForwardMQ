@@ -106,7 +106,8 @@ public class DiscordChannelConnection extends Component.Base {
             return;
         }
         var server = matcher.group("server");
-        var username = matcher.group("displayname");
+        var username = matcher.group("username");
+        var displayname = matcher.group("displayname");
         var content = matcher.group("message");
         //noinspection ConstantValue,OptionalOfNullableMisuse
         Optional.ofNullable(config.webhookUrl)
@@ -125,7 +126,7 @@ public class DiscordChannelConnection extends Component.Base {
                                 }))
                         .thenApply(JDAWebhookClient::from))
                 .thenCompose(wh -> wh.send(new WebhookMessageBuilder()
-                        .setUsername(username + " on " + server)
+                        .setUsername(displayname + " on " + server)
                         .setAvatarUrl("https://mc-heads.net/avatar/" + username)
                         .setContent(content)
                         .build()))
