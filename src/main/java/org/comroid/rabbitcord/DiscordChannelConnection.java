@@ -35,6 +35,7 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.util.concurrent.CompletableFuture.failedFuture;
 import static java.util.function.Predicate.not;
 
 @Log
@@ -117,7 +118,7 @@ public class DiscordChannelConnection extends Component.Base {
                                 .filter(wh -> wh.getName().toLowerCase().contains("aurion"))
                                 .findAny()
                                 .map(CompletableFuture::completedFuture)
-                                .orElseThrow(() -> new NoSuchElementException("No webhook present; creating one..."))
+                                .orElseGet(()->failedFuture(new NoSuchElementException("No webhook present; creating one...")))
                                 .exceptionallyCompose(e -> {
                                     log.log(Level.INFO, "Could not obtain webhook", e);
                                     return channel.createWebhook("AurionChat Link").submit();
@@ -128,7 +129,10 @@ public class DiscordChannelConnection extends Component.Base {
                         .setAvatarUrl("https://mc-heads.net/avatar/" + username)
                         .setContent(content)
                         .build()))
-                .exceptionally(Polyfill.exceptionLogger(log, "Unable to forward message"));
+                .exceptionally(e-> {
+                    log.log(Level.SEVERE, "Unable to forward message", e);
+                    return null;
+                });
     }
 
     @SneakyThrows
