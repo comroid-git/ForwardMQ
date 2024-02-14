@@ -54,11 +54,12 @@ public class DiscordChannelConnection extends Component.Base {
         var factory = new ConnectionFactory();
         factory.setUri(config.amqpUri);
         connection = factory.newConnection();
+        checkChannel();
     }
 
     @SneakyThrows
     private void checkChannel() {
-        if (channel.isOpen())
+        if (channel != null && channel.isOpen())
             return;
 
         channel = connection.createChannel();
@@ -106,6 +107,7 @@ public class DiscordChannelConnection extends Component.Base {
         var server = matcher.group("server");
         var username = matcher.group("username");
         var content = matcher.group("message");
+        //noinspection ConstantValue,OptionalOfNullableMisuse
         Optional.ofNullable(config.webhookUrl)
                 .filter(not(String::isBlank))
                 .map(WebhookClient::withUrl)
@@ -157,20 +159,20 @@ public class DiscordChannelConnection extends Component.Base {
     public static class Config implements DataNode, UUIDContainer {
         long guildId;
         long channelId;
-        @Nullable String webhookUrl;
+        @Nullable String webhookUrl = null;
         @Nullable String inviteUrl;
         String amqpUri;
         String exchange;
 
         public Config(@Alias("guildId") long guildId,
                       @Alias("channelId") long channelId,
-                      @Alias("webhookUrl") String webhookUrl,
+                      //@Alias("webhookUrl") String webhookUrl,
                       @Alias("inviteUrl") String inviteUrl,
                       @Alias("amqpUri") String amqpUri,
                       @Alias("exchange") String exchange) {
             this.guildId = guildId;
             this.channelId = channelId;
-            this.webhookUrl = webhookUrl;
+            //this.webhookUrl = webhookUrl;
             this.inviteUrl = inviteUrl;
             this.amqpUri = amqpUri;
             this.exchange = exchange;
