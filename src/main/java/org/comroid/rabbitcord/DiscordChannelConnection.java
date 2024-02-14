@@ -89,8 +89,8 @@ public class DiscordChannelConnection extends Component.Base {
     }
 
     public static final Pattern MessagePattern = Pattern.compile("(?<server>[a-zA-Z0-9]+)" +
-            "\\s\\[(?<rank>.+)]" +
-            "\\s(?<username>\\w+):" +
+            "\\s(?<displayname>\\[(?<rank>.+)]" +
+            "\\s(?<username>\\w+)):" +
             "\\s(?<message>.+)");
     public void sendToDiscord(net.kyori.adventure.text.Component component) {
         var channel = RabbitCord.Instance.getJda()
@@ -106,7 +106,7 @@ public class DiscordChannelConnection extends Component.Base {
             return;
         }
         var server = matcher.group("server");
-        var username = matcher.group("username");
+        var username = matcher.group("displayname");
         var content = matcher.group("message");
         //noinspection ConstantValue,OptionalOfNullableMisuse
         Optional.ofNullable(config.webhookUrl)
