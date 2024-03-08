@@ -1,6 +1,5 @@
 package org.comroid.rabbitcord;
 
-import emoji4j.Emoji;
 import emoji4j.EmojiUtils;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -26,20 +25,16 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.Compression;
-import net.dv8tion.jda.internal.entities.emoji.UnicodeEmojiImpl;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.TextColor;
 import org.comroid.annotations.Alias;
 import org.comroid.api.Polyfill;
 import org.comroid.api.data.seri.DataNode;
-import org.comroid.api.data.seri.Jackson;
+import org.comroid.api.data.seri.adp.Jackson;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Event;
 import org.comroid.api.func.util.Streams;
 import org.comroid.api.io.FileHandle;
-import org.comroid.api.text.Markdown;
-import org.comroid.api.text.TextDecoration;
 import org.comroid.api.tree.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
