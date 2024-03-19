@@ -152,7 +152,7 @@ public class DiscordChannelConnection extends Component.Base {
         try {
             var data = new JsonParser().parse(new String(content.getBody(), StandardCharsets.UTF_8)).getAsJsonObject();
             var component = GsonComponentSerializer.gson().deserialize(data.get("message").getAsString());
-            if (!data.has("source"))
+            if (!data.has("source") && data.get("channel").getAsString().equalsIgnoreCase("global"))
                 sendToDiscord(component);
         } catch (Throwable t) {
             log.log(Level.SEVERE, "Internal error", t);
