@@ -9,10 +9,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Invite;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -104,7 +101,7 @@ public enum RabbitCord implements Command.Handler {
                     .subscribeData(event -> cmdr.execute(event.getName(), event, event.getUser(), event.getGuild(), event.getChannel()));
             bus.flatMap(MessageReceivedEvent.class).listen().subscribeData(event -> {
                 var author = event.getAuthor();
-                if (author.isBot())
+                if (author.isBot() && author.getIdLong() != 955744627481255976L)
                     return;
 
                 var channelId = new UUID(event.getGuild().getIdLong(), event.getChannel().getIdLong());
@@ -112,7 +109,12 @@ public enum RabbitCord implements Command.Handler {
                     return;
 
                 var message = event.getMessage();
-                var str = message.getContentStripped() + message.getAttachments().stream()
+                var str = message.getContentStripped()
+                        + message.getEmbeds().stream()
+                        .map(MessageEmbed::getDescription)
+                        .collect(Collectors.joining(" ", " ", ""))
+                        .trim()
+                        + message.getAttachments().stream()
                         .map(Message.Attachment::getUrl)
                         .collect(Collectors.joining(" ", " ", ""))
                         .trim();
