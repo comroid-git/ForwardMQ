@@ -32,6 +32,8 @@ import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Event;
 import org.comroid.api.func.util.Streams;
 import org.comroid.api.io.FileHandle;
+import org.comroid.api.text.Markdown;
+import org.comroid.api.text.TextDecoration;
 import org.comroid.api.tree.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,6 +114,7 @@ public enum RabbitCord implements Command.Handler {
                 var str = message.getContentStripped()
                         + message.getEmbeds().stream()
                         .map(MessageEmbed::getDescription)
+                        .map(desc -> TextDecoration.sanitize(desc, Markdown.class))
                         .collect(Collectors.joining(" ", " ", ""))
                         .trim()
                         + message.getAttachments().stream()
