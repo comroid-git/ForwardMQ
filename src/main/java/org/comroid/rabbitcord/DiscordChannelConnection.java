@@ -180,7 +180,7 @@ public class DiscordChannelConnection extends Component.Base {
                       @Alias("inviteUrl") String inviteUrl,
                       @Alias("amqpUri") String amqpUri,
                       @Alias("exchange") String exchange,
-                      @Alias("exchange") String channelName) {
+                      @Alias("channelName") String channelName) {
             this.guildId = guildId;
             this.channelId = channelId;
             //this.webhookUrl = webhookUrl;
