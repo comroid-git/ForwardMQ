@@ -152,7 +152,7 @@ public class DiscordChannelConnection extends Component.Base {
         try {
             var data = new JsonParser().parse(new String(content.getBody(), StandardCharsets.UTF_8)).getAsJsonObject();
             var component = GsonComponentSerializer.gson().deserialize(data.get("message").getAsString());
-            if (!data.has("source") && data.get("channel").getAsString().equalsIgnoreCase("global"))
+            if (!data.has("source") && data.get("channel").getAsString().equalsIgnoreCase(config.channelName))
                 sendToDiscord(component);
         } catch (Throwable t) {
             log.log(Level.SEVERE, "Internal error", t);
@@ -167,19 +167,22 @@ public class DiscordChannelConnection extends Component.Base {
         @Nullable String inviteUrl;
         String amqpUri;
         String exchange;
+        String channelName;
 
         public Config(@Alias("guildId") long guildId,
                       @Alias("channelId") long channelId,
                       //@Alias("webhookUrl") String webhookUrl,
                       @Alias("inviteUrl") String inviteUrl,
                       @Alias("amqpUri") String amqpUri,
-                      @Alias("exchange") String exchange) {
+                      @Alias("exchange") String exchange,
+                      @Alias("exchange") String channelName) {
             this.guildId = guildId;
             this.channelId = channelId;
             //this.webhookUrl = webhookUrl;
             this.inviteUrl = inviteUrl;
             this.amqpUri = amqpUri;
             this.exchange = exchange;
+            this.channelName = channelName;
         }
 
         @Ignore

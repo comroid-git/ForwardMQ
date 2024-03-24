@@ -157,6 +157,7 @@ public enum RabbitCord implements Command.Handler {
     public String amqpLink(
             @Command.Arg String amqpUri,
             @Command.Arg String exchangeName,
+            @Command.Arg String channelName,
             @Command.Arg @Nullable String inviteUrl,
             SlashCommandInteractionEvent event,
             Guild guild,
@@ -175,7 +176,7 @@ public enum RabbitCord implements Command.Handler {
                 .findAny()
                 .map(Invite::getUrl)
                 .orElse(null),
-                uri, exchange);
+                uri, exchange, channelName);
         var id = config.getUuid();
 
         var conn = new DiscordChannelConnection(config);
