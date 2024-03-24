@@ -154,6 +154,7 @@ public class DiscordChannelConnection extends Component.Base {
             var component = GsonComponentSerializer.gson().deserialize(data.get("message").getAsString());
             if (!data.has("source") && data.get("channel").getAsString().equalsIgnoreCase(config.channelName))
                 sendToDiscord(component);
+            else log.log(Level.INFO, "Not forwarding to discord: " + data);
         } catch (Throwable t) {
             log.log(Level.SEVERE, "Internal error", t);
         }
