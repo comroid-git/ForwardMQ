@@ -124,14 +124,15 @@ public enum RabbitCord implements Command.Handler {
                         .trim();
                 //str = TextDecoration.sanitize(str, Markdown.class);
 
-                var inviteUrl = channels.get(channelId).getConfig().getInviteUrl();
-                var discord = text("DISCORD ", TextColor.color(86, 98, 246));
+                var channel = channels.get(channelId);
+                var inviteUrl = channel.getConfig().getInviteUrl();
+                var discord = text('#' + event.getChannel().getName() + " : DISCORD ", TextColor.color(86, 98, 246));
                 if (inviteUrl != null)
                     discord = discord.clickEvent(ClickEvent.openUrl(inviteUrl));
                 var comp = discord
                         .append(text(EmojiUtils.removeAllEmojis(author.getEffectiveName()).trim(), TextColor.color(Objects.requireNonNull(message.getMember()).getColorRaw())))
                         .append(text(": " + str, TextColor.color(0xFF_FF_FF)));
-                channels.get(channelId).sendToRabbit(comp);
+                channel.sendToRabbit(comp);
             });
         } catch (Throwable t) {
             throw new RuntimeException("Unable to start application", t);
