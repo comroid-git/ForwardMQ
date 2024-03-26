@@ -115,6 +115,7 @@ public enum RabbitCord implements Command.Handler {
                         + message.getEmbeds().stream()
                         .map(MessageEmbed::getDescription)
                         .map(desc -> TextDecoration.sanitize(desc, Markdown.class))
+                        .filter(Objects::nonNull)
                         .map(desc -> desc.replaceAll("\\[(.+)]\\(.+\\)", "$1"))
                         .collect(Collectors.joining(" ", " ", ""))
                         .trim()

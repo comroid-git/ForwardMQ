@@ -142,7 +142,9 @@ public class DiscordChannelConnection extends Component.Base {
         json.addProperty("type", "chat");
         json.addProperty("source", "discord");
         json.addProperty("channel", "global");
-        json.addProperty("message", GsonComponentSerializer.gson().serializeToTree(component).toString());
+        json.addProperty("message", GsonComponentSerializer.gson()
+                .serializeToTree(component).toString()
+                .replaceAll("@((everyone)|(here))", "@ $1"));
 
         checkChannel();
         channel.basicPublish(config.exchange, "", null, json.toString().getBytes());
