@@ -130,7 +130,11 @@ public enum RabbitCord implements Command.Handler {
                 if (inviteUrl != null)
                     discord = discord.clickEvent(ClickEvent.openUrl(inviteUrl));
                 var comp = discord
-                        .append(text(EmojiUtils.removeAllEmojis(author.getEffectiveName()).trim(), TextColor.color(Objects.requireNonNull(message.getMember()).getColorRaw())))
+                        .append(text(EmojiUtils.removeAllEmojis(author.getEffectiveName()).trim(),
+                                Optional.ofNullable(message.getMember())
+                                        .map(Member::getColorRaw)
+                                        .map(TextColor::color)
+                                        .orElse(TextColor.color(0xffffff))))
                         .append(text(": " + str, TextColor.color(0xFF_FF_FF)));
                 channel.sendToRabbit(comp);
             });
