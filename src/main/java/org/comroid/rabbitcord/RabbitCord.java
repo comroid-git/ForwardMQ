@@ -31,6 +31,7 @@ import org.comroid.api.data.seri.adp.Jackson;
 import org.comroid.api.func.util.Command;
 import org.comroid.api.func.util.Event;
 import org.comroid.api.func.util.Streams;
+import org.comroid.api.info.Log;
 import org.comroid.api.io.FileHandle;
 import org.comroid.api.text.Markdown;
 import org.comroid.api.text.TextDecoration;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -104,7 +106,8 @@ public enum RabbitCord implements Command.Handler {
                     .subscribeData(event -> cmdr.execute(event.getName(), event, event.getUser(), event.getGuild(), event.getChannel()));
             bus.flatMap(MessageReceivedEvent.class).listen().subscribeData(event -> {
                 var author = event.getAuthor();
-                if (author.isBot() && author.getEffectiveName().contains(" on "))
+                Log.at(Level.INFO, "Author ID: %d; Message: %s".formatted(author.getIdLong(), event.getMessage().getContentRaw()));
+                if (author.isBot() && author.getIdLong() == 1134863874626179193L)
                     return;
 
                 var channelId = new UUID(event.getGuild().getIdLong(), event.getChannel().getIdLong());
