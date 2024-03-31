@@ -42,6 +42,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.Component.text;
@@ -103,7 +104,7 @@ public enum RabbitCord implements Command.Handler {
                     .subscribeData(event -> cmdr.execute(event.getName(), event, event.getUser(), event.getGuild(), event.getChannel()));
             bus.flatMap(MessageReceivedEvent.class).listen().subscribeData(event -> {
                 var author = event.getAuthor();
-                if (author.isBot() && author.getIdLong() == 1134863874626179193L)
+                if (author.isBot() && author.getEffectiveName().contains(" on "))
                     return;
 
                 var channelId = new UUID(event.getGuild().getIdLong(), event.getChannel().getIdLong());
