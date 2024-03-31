@@ -107,7 +107,7 @@ public enum RabbitCord implements Command.Handler {
             bus.flatMap(MessageReceivedEvent.class).listen().subscribeData(event -> {
                 var author = event.getAuthor();
                 Log.at(Level.INFO, "Author ID: %d; Message: %s".formatted(author.getIdLong(), event.getMessage().getContentRaw()));
-                if (author.isBot() && author.getIdLong() == 1134863874626179193L)
+                if (author.isBot() && author.getIdLong() == 1207401249922617445L)
                     return;
 
                 var channelId = new UUID(event.getGuild().getIdLong(), event.getChannel().getIdLong());
