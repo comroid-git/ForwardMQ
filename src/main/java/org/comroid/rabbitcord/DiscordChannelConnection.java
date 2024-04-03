@@ -107,7 +107,8 @@ public class DiscordChannelConnection extends Component.Base {
         var server = matcher.group("server");
         var username = matcher.group("username");
         var displayname = matcher.group("displayname");
-        var content = matcher.group("message");
+        var content = matcher.group("message")
+                .replaceAll("@((everyone)|(here))", "@ $1");
         //noinspection ConstantValue,OptionalOfNullableMisuse
         Optional.ofNullable(config.webhookUrl)
                 .filter(not(String::isBlank))
