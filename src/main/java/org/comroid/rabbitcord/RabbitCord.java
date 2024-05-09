@@ -51,7 +51,7 @@ import static net.kyori.adventure.text.Component.text;
 
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public enum RabbitCord implements Command.Handler {
+public enum RabbitCord {
     Instance;
 
     FileHandle DirBase;
@@ -90,8 +90,10 @@ public enum RabbitCord implements Command.Handler {
                             .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
             ).queue();
 
-            cmdr = new Command.Manager(this);
+            cmdr = new Command.Manager();
             cmdr.new Adapter$JDA(jda);
+            cmdr.register(this);
+            cmdr.initialize();
 
             channels = Arrays.stream(Objects.requireNonNull(DirChannels.listFiles()))
                     .map(FileHandle::new)
@@ -208,37 +210,6 @@ public enum RabbitCord implements Command.Handler {
             return "Link could not be removed";
         old.terminate();
         return "Channel was unlinked";
-    }
-
-    @Override
-    public void handleResponse(Command.Delegate cmd, @NotNull Object response, Object... args) {
-        final var e = Stream.of(args)
-                .flatMap(Streams.cast(SlashCommandInteractionEvent.class))
-                .findAny()
-                .orElseThrow();
-        final var user = Stream.of(args)
-                .flatMap(Streams.cast(User.class))
-                .findAny()
-                .orElseThrow();
-        if (response instanceof CompletableFuture)
-            e.deferReply().setEphemeral(cmd.ephemeral())
-                    .submit()
-                    .thenCombine(((CompletableFuture<?>) response), (hook, resp) -> {
-                        WebhookMessageCreateAction<Message> req;
-                        if (resp instanceof EmbedBuilder)
-                            req = hook.sendMessageEmbeds(embed((EmbedBuilder) resp, user).build());
-                        else req = hook.sendMessage(String.valueOf(resp));
-                        return req.submit();
-                    })
-                    .thenCompose(Function.identity())
-                    .exceptionally(Polyfill.exceptionLogger());
-        else {
-            ReplyCallbackAction req;
-            if (response instanceof EmbedBuilder)
-                req = e.replyEmbeds(embed((EmbedBuilder) response, user).build());
-            else req = e.reply(String.valueOf(response));
-            req.setEphemeral(cmd.ephemeral()).submit();
-        }
     }
 
     private EmbedBuilder embed(EmbedBuilder base, User user) {
