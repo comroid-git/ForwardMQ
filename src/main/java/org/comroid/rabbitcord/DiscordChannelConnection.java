@@ -88,7 +88,7 @@ public class DiscordChannelConnection extends Component.Base {
     }
 
     public static final Pattern MessagePattern = Pattern.compile("(?<server>[a-zA-Z0-9]+)" +
-            "(\\s|:|\\|)*?(?<displayname>\\[?(?<rank>.+)]?" +
+            "(\\s|:|\\|)*?(?<displayname>\\[?(?<rank>\\w+)]?" +
             "(\\s|:|\\|)*?(?<username>\\w+)):" +
             "\\s(?<message>.+)");
     public void sendToDiscord(net.kyori.adventure.text.Component component) {
