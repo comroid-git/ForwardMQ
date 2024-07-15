@@ -91,7 +91,7 @@ public enum RabbitCord {
             ).queue();
 
             cmdr = new Command.Manager();
-            cmdr.new Adapter$JDA(jda);
+            var adp = cmdr.new Adapter$JDA(jda);
             cmdr.register(this);
             cmdr.initialize();
 
@@ -104,8 +104,8 @@ public enum RabbitCord {
                     .collect(Collectors.toMap(DiscordChannelConnection.Config::getUuid, DiscordChannelConnection::new));
             channels.values().forEach(Component.Base::initialize);
 
-            bus.flatMap(SlashCommandInteractionEvent.class).listen()
-                    .subscribeData(event -> cmdr.execute(event.getName(), event, event.getUser(), event.getGuild(), event.getChannel()));
+//            bus.flatMap(SlashCommandInteractionEvent.class).listen()
+//                    .subscribeData(event -> cmdr.execute(adp, event.getName(), event, event.getUser(), event.getGuild(), event.getChannel()));
             bus.flatMap(MessageReceivedEvent.class).listen().subscribeData(event -> {
                 var author = event.getAuthor();
                 //Log.at(Level.INFO, "Author ID: %d; Message: %s".formatted(author.getIdLong(), event.getMessage().getContentRaw()));
